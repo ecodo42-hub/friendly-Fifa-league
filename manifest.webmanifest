@@ -1,16 +1,26 @@
 {
-  "name": "دوري العائلة",
-  "short_name": "دوري العائلة",
-  "description": "نتائج وترتيب الدوري مباشرة لكل اللاعبين",
+  "name": "بطولة فيفا 26 العائلية",
+  "short_name": "بطولة العائلة",
+  "description": "نتائج وترتيب البطولة مباشرة لكل العائلة",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#07120c",
-  "theme_color": "#07120c",
+  "background_color": "#0b1410",
+  "theme_color": "#0b1410",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

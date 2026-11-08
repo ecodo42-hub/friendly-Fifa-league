@@ -1,5 +1,5 @@
 // Network-first service worker: always tries the newest version, falls back to cache when offline.
-const CACHE = 'family-league-v1';
+const CACHE = 'gold-cup-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
