@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>دوري العائلة</title>
+<meta name="theme-color" content="#07120c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دوري العائلة">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+:root{
+  --bg:#07120c; --bg2:#0b1a12; --card:#0f2218; --card2:#14301f; --line:#1e3f2b;
+  --g:#39ff88; --g2:#22c55e; --gd:#0f5132; --txt:#e8f5ec; --mut:#8fb39c;
+  --gold:#f5c542; --silver:#c9d1d9; --bronze:#d08a4a; --red:#ff5a5f;
+  --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:'Cairo',system-ui,sans-serif;}
+body{min-height:100vh;padding-bottom:calc(90px + env(safe-area-inset-bottom));
+  background:radial-gradient(1200px 500px at 50% -200px,#103a24 0%,transparent 60%),var(--bg);}
+button,input,select{font-family:inherit;font-size:16px}
+.wrap{max-width:720px;margin:0 auto;padding:16px;padding-top:calc(16px + env(safe-area-inset-top))}
+h1,h2,h3{margin:0}
+.brand{display:flex;align-items:center;gap:10px;margin:8px 0 20px}
+.brand img{width:44px;height:44px;border-radius:12px}
+.brand .t{font-weight:900;font-size:24px;letter-spacing:.5px}
+.brand .s{color:var(--mut);font-size:13px}
+.card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;color:#04130a;background:var(--g);transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost{background:transparent;color:var(--mut);border:1px solid var(--line)}
+.btn.danger{background:#3a1416;color:#ffb3b5;border:1px solid #5c2125}
+.btn.block{width:100%}
+.btn.sm{padding:8px 12px;font-size:14px;border-radius:10px}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.col{display:flex;flex-direction:column;gap:10px}
+label{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
+input,select{width:100%;background:#06100a;border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:12px;outline:none}
+input:focus,select:focus{border-color:var(--g2)}
+.codein{text-align:center;letter-spacing:8px;font-weight:900;font-size:24px;text-transform:uppercase}
+.muted{color:var(--mut);font-size:13px}
+.hidden{display:none!important}
+/* league header */
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.lhead .name{font-size:22px;font-weight:900;line-height:1.2}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}
+.chip.code{letter-spacing:2px;color:var(--g)}
+.dot{width:8px;height:8px;border-radius:50%;background:#777;display:inline-block}
+.dot.on{background:var(--g);box-shadow:0 0 8px var(--g);animation:pulse 2s infinite}
+.dot.off{background:var(--red)}
+.dot.wait{background:var(--gold)}
+@keyframes pulse{50%{opacity:.4}}
+.iconbtn{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:12px;width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex:0 0 auto}
+.iconbtn.on{background:var(--gd);border-color:var(--g2)}
+/* tabs */
+.tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(7,18,12,.95);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
+.tab{flex:1;background:none;border:0;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;padding:6px;cursor:pointer}
+.tab .i{font-size:20px}
+.tab.act{color:var(--g)}
+/* standings */
+table{width:100%;border-collapse:collapse}
+.st th{font-size:11px;color:var(--mut);font-weight:700;padding:6px 2px;text-align:center}
+.st td{padding:10px 2px;text-align:center;border-top:1px solid var(--line);font-size:14px}
+.st td.n{text-align:right}
+.st tr.top1 td{background:linear-gradient(90deg,transparent,rgba(245,197,66,.10))}
+.pos{display:inline-flex;width:26px;height:26px;border-radius:8px;align-items:center;justify-content:center;font-weight:900;font-size:13px;background:var(--card2)}
+.pos.p1{background:var(--gold);color:#2a1d00}.pos.p2{background:var(--silver);color:#111}.pos.p3{background:var(--bronze);color:#1d0e00}
+.pl{display:flex;align-items:center;gap:8px;cursor:pointer}
+.av{width:32px;height:32px;border-radius:50%;background:var(--gd);display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:var(--g);flex:0 0 auto;overflow:hidden;border:1px solid var(--line)}
+.av img{width:100%;height:100%;object-fit:cover}
+.av.lg{width:64px;height:64px;font-size:24px}
+.pts{font-weight:900;color:var(--g);font-size:16px}
+.gdp{color:var(--g2)}.gdn{color:var(--red)}
+/* matches */
+.match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+.match:first-child{border-top:0}
+.match .side{display:flex;align-items:center;gap:8px;font-weight:700;min-width:0}
+.match .side span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.match .side.a{flex-direction:row-reverse;text-align:left}
+.score{font-weight:900;font-size:20px;background:#06100a;border:1px solid var(--line);border-radius:10px;padding:4px 12px;min-width:76px;text-align:center;unicode-bidi:isolate}
+.win{color:var(--g)}
+.meta{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut)}
+.badge{font-size:11px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.pending{color:var(--gold)}
+/* players grid */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pcard{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer}
+.pcard .nm{font-weight:900}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:50;animation:fade .15s}
+.sheet{background:var(--bg2);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;width:100%;max-width:720px;max-height:92vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom));animation:up .2s}
+.sheet h3{font-size:19px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+@keyframes fade{from{opacity:0}}@keyframes up{from{transform:translateY(40px)}}
+.x{background:none;border:0;color:var(--mut);font-size:24px;cursor:pointer}
+/* score stepper */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end}
+.step{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:22px;font-weight:900;cursor:pointer}
+.step .v{font-size:34px;font-weight:900;min-width:44px;text-align:center;color:var(--g)}
+.statgrid{display:grid;grid-template-columns:1fr 90px 1fr;gap:8px;align-items:center;margin-top:8px}
+.statgrid .lb{text-align:center;font-size:12px;color:var(--mut)}
+.statgrid input{padding:8px;text-align:center}
+details summary{cursor:pointer;color:var(--g2);font-weight:700;padding:8px 0}
+.qr{background:#fff;border-radius:16px;padding:12px;display:inline-block}
+.qr svg{display:block;width:220px;height:220px}
+.bigcode{font-size:40px;font-weight:900;letter-spacing:10px;color:var(--g);direction:ltr}
+.toast{position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--g2);color:var(--txt);padding:10px 16px;border-radius:12px;z-index:99;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.toast.err{border-color:var(--red)}
+.fab{position:fixed;left:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:21;border-radius:999px;padding:14px 20px;box-shadow:0 8px 24px rgba(57,255,136,.35)}
+.banner{background:var(--card2);border:1px dashed var(--g2);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:flex;gap:10px;align-items:center}
+.list-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card2);margin-bottom:8px;cursor:pointer}
+.chk{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--card2)}
+.chk input{width:auto}
+.pairs .pair{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card2)}
+.empty{text-align:center;color:var(--mut);padding:30px 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.kpi b{display:block;font-size:22px;color:var(--g)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ================== CONFIG ================== */
+const SUPABASE_URL = 'https://bpbofolxczkbcobkowmt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_O20N2hGPxGtFbNPT7QbVAw_iKqr7yoJ';
+const APP_VERSION = '1.0.0';
+
+/* ================== HELPERS ================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() :
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==='x'?r:(r&3|8)).toString(16); }));
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const ERR = {
+  bad_pin:'الرقم السري غير صحيح', locked:'محاولات خاطئة كثيرة — انتظر 5 دقائق', not_found:'الكود غير موجود',
+  pin_format:'الرقم السري لازم يكون من 4 إلى 8 أرقام', name:'اكتب الاسم', same_player:'اختر لاعبين مختلفين',
+  bad_players:'اللاعبين غير موجودين في هذا الدوري', forbidden:'غير مسموح', network:'لا يوجد اتصال بالإنترنت'
+};
+function toast(msg, err){
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function initials(n){ n = (n||'').trim(); return n ? n[0] : '?'; }
+function avatar(p, cls=''){ return `<span class="av ${cls}">${p && p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p && p.name))}</span>`; }
+function shareLink(code){ return location.origin + location.pathname + '?c=' + code; }
+function fmtDate(s){ try{ return new Date(s).toLocaleString('ar-OM',{weekday:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+
+/* ================== STATE ================== */
+let sb = null;
+try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession:false } }); } catch(e) { console.error(e); }
+const S = { league:null, players:[], matches:[], tab:'table', live:'wait', channel:null, round:null };
+const pinKey = c => 'fl_pin_' + c;
+const cacheKey = c => 'fl_cache_' + c;
+const isOrg = () => !!(S.league && LS.get(pinKey(S.league.code)));
+let outbox = LS.get('fl_outbox', []);
+
+/* ================== DATA ================== */
+async function rpc(fn, args){
+  if(!sb) return { ok:false, error:'network' };
+  try{
+    const { data, error } = await sb.rpc(fn, args);
+    if(error){ return { ok:false, error: error.code ? (error.message || 'error') : 'network', transient: !error.code }; }
+    return data;
+  }catch(e){ return { ok:false, error:'network', transient:true }; }
+}
+
+async function openLeague(code){
+  code = (code||'').trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code)){ toast('الكود 6 خانات', true); return; }
+  // show cached copy instantly (works offline)
+  const cached = LS.get(cacheKey(code));
+  if(cached){ Object.assign(S, { league:cached.league, players:cached.players, matches:cached.matches }); applyOutboxLocally(); S.tab='table'; render(); }
+  const r = await rpc('get_league', { p_code: code });
+  if(!r || !r.ok){
+    if(r && r.error === 'network'){ if(!cached) toast(ERR.network, true); setLive('off'); return; }
+    toast(ERR[r.error] || 'خطأ', true); if(!cached) return;
+    return;
+  }
+  S.league = { id:r.id, code:r.code, name:r.name, settings:r.settings || {win:3,draw:1,loss:0} };
+  addRecent(S.league);
+  history.replaceState(null, '', '?c=' + code);
+  if(!cached){ S.tab='table'; }
+  await refetch();
+  subscribe();
+}
+
+async function refetch(){
+  if(!S.league || !sb) return;
+  try{
+    const lid = S.league.id;
+    const [p, m] = await Promise.all([
+      sb.from('players').select('*').eq('league_id', lid).order('created_at'),
+      sb.from('matches').select('*').eq('league_id', lid).order('played_at')
+    ]);
+    if(p.error || m.error) throw (p.error || m.error);
+    if(!S.league || S.league.id !== lid) return;
+    S.players = p.data; S.matches = m.data;
+    applyOutboxLocally(); saveCache(); render();
+  }catch(e){ setLive('off'); }
+}
+
+function saveCache(){ if(S.league) LS.set(cacheKey(S.league.code), { league:S.league, players:S.players, matches:S.matches }); }
+
+function upsertLocal(table, row, fromServer){
+  const arr = S[table]; const i = arr.findIndex(x => x.id === row.id);
+  if(i >= 0) arr[i] = fromServer ? row : Object.assign({}, arr[i], row); else arr.push(row);
+}
+
+function subscribe(){
+  if(!sb || !S.league) return;
+  if(S.channel){ sb.removeChannel(S.channel); S.channel = null; }
+  const lid = S.league.id;
+  setLive('wait');
+  S.channel = sb.channel('league-' + lid)
+    .on('postgres_changes', { event:'*', schema:'public', table:'players', filter:'league_id=eq.' + lid }, p => { if(p.new && p.new.id){ upsertLocal('players', p.new, true); applyOutboxLocally(); saveCache(); render(); } })
+    .on('postgres_changes', { event:'*', schema:'public', table:'matches', filter:'league_id=eq.' + lid }, p => { if(p.new && p.new.id){ upsertLocal('matches', p.new, true); applyOutboxLocally(); saveCache(); render(); } })
+    .subscribe(status => {
+      if(status === 'SUBSCRIBED'){ setLive('on'); refetch(); flush(); }
+      else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){ setLive('off'); }
+    });
+}
+
+function setLive(s){ S.live = s; const d = $('#liveDot'); if(d){ d.className = 'dot ' + s; } const t = $('#liveTxt'); if(t) t.textContent = liveText(); }
+function liveText(){ const n = outbox.filter(o => S.league && o.code === S.league.code).length;
+  return (S.live === 'on' ? 'مباشر' : S.live === 'off' ? 'غير متصل' : 'جاري الاتصال') + (n ? ` • ${n} بانتظار الرفع` : ''); }
+
+/* ===== Offline-safe writes (outbox) ===== */
+function queue(fn, args, localApply){
+  const op = { id: uuid(), code: S.league.code, fn, args };
+  outbox.push(op); LS.set('fl_outbox', outbox);
+  if(localApply) localApply();
+  saveCache(); render(); flush();
+}
+function applyOutboxLocally(){
+  for(const op of outbox){
+    if(!S.league || op.code !== S.league.code) continue;
+    const a = op.args;
+    if(op.fn === 'upsert_player') upsertLocal('players', { id:a.p_id, league_id:S.league.id, name:a.p_name, photo:a.p_photo, deleted:a.p_deleted, _pending:true, created_at: (S.players.find(x=>x.id===a.p_id)||{}).created_at || new Date().toISOString() });
+    if(op.fn === 'upsert_match') upsertLocal('matches', { id:a.p_id, league_id:S.league.id, home_id:a.p_home, away_id:a.p_away, home_score:a.p_home_score, away_score:a.p_away_score, round:a.p_round, stats:a.p_stats, deleted:a.p_deleted, _pending:true, played_at: (S.matches.find(x=>x.id===a.p_id)||{}).played_at || new Date().toISOString() });
+  }
+}
+let flushing = false;
+async function flush(){
+  if(flushing || !outbox.length) return;
+  flushing = true;
+  try{
+    while(outbox.length){
+      const op = outbox[0];
+      const pin = LS.get(pinKey(op.code));
+      if(!pin){ outbox.shift(); continue; }
+      const r = await rpc(op.fn, Object.assign({ p_code: op.code, p_pin: pin }, op.args));
+      if(r && r.ok){
+        outbox.shift(); LS.set('fl_outbox', outbox);
+        if(S.league && op.code === S.league.code){
+          const t = op.fn === 'upsert_player' ? 'players' : op.fn === 'upsert_match' ? 'matches' : null;
+          if(t){ const row = S[t].find(x => x.id === op.args.p_id); if(row) delete row._pending; }
+        }
+        continue;
+      }
+      if(r && (r.transient || r.error === 'network' || r.error === 'locked')){ setLive('off'); break; }
+      // permanent failure: drop it and tell the organizer
+      outbox.shift(); LS.set('fl_outbox', outbox);
+      toast('لم يتم الحفظ: ' + (ERR[r && r.error] || (r && r.error) || 'خطأ'), true);
+      if(r && r.error === 'bad_pin'){ LS.del(pinKey(op.code)); }
+      if(S.league && op.code === S.league.code) refetch();
+    }
+  } finally { flushing = false; setLive(S.live); render(); }
+}
+window.addEventListener('online', () => { flush(); if(S.league){ subscribe(); } });
+window.addEventListener('offline', () => setLive('off'));
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.league){ refetch(); flush(); if(S.live !== 'on') subscribe(); } });
+setInterval(() => { flush(); if(S.league && S.live !== 'on' && navigator.onLine){ if(S.live === 'off') subscribe(); else refetch(); } }, 15000);
+
+/* ================== RECENT ================== */
+function addRecent(l){ let r = LS.get('fl_recent', []).filter(x => x.code !== l.code); r.unshift({ code:l.code, name:l.name, t:Date.now() }); LS.set('fl_recent', r.slice(0, 10)); }
+
+/* ================== STANDINGS ================== */
+function activePlayers(){ return S.players.filter(p => !p.deleted); }
+function activeMatches(){
+  const ids = new Set(activePlayers().map(p => p.id));
+  return S.matches.filter(m => !m.deleted && ids.has(m.home_id) && ids.has(m.away_id));
+}
+function standings(){
+  const st = S.league.settings || {}; const W = +st.win || 3, D = +(st.draw ?? 1), L = +(st.loss ?? 0);
+  const t = {};
+  activePlayers().forEach(p => t[p.id] = { p, P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0, form:[] });
+  activeMatches().forEach(m => {
+    const h = t[m.home_id], a = t[m.away_id]; if(!h || !a) return;
+    h.P++; a.P++; h.GF += m.home_score; h.GA += m.away_score; a.GF += m.away_score; a.GA += m.home_score;
+    if(m.home_score > m.away_score){ h.W++; a.L++; h.Pts += W; a.Pts += L; h.form.push('W'); a.form.push('L'); }
+    else if(m.home_score < m.away_score){ a.W++; h.L++; a.Pts += W; h.Pts += L; a.form.push('W'); h.form.push('L'); }
+    else { h.D++; a.D++; h.Pts += D; a.Pts += D; h.form.push('D'); a.form.push('D'); }
+  });
+  return Object.values(t).sort((x, y) => y.Pts - x.Pts || (y.GF - y.GA) - (x.GF - x.GA) || y.GF - x.GF || x.P - y.P || x.p.name.localeCompare(y.p.name, 'ar'));
+}
+
+/* ================== RENDER ================== */
+function render(){
+  const app = $('#app');
+  const ae = document.activeElement;
+  if(S.league && (S.tab === 'settings') && ae && app.contains(ae) && ae.tagName === 'INPUT'){ setLive(S.live); return; }
+  if(!S.league){ app.innerHTML = homeView(); bindHome(); $('#tabs')?.remove(); $('#fab')?.remove(); return; }
+  app.innerHTML = leagueHeader() + iosBanner() + (S.tab === 'table' ? tableView() : S.tab === 'matches' ? matchesView() : S.tab === 'players' ? playersView() : S.tab === 'round' ? roundView() : settingsView());
+  renderTabs(); renderFab();
+}
+
+function homeView(){
+  const recent = LS.get('fl_recent', []);
+  return `
+  <div class="brand"><img src="icon-192.png" alt=""><div><div class="t">دوري العائلة</div><div class="s">نتائج مباشرة لكل اللاعبين</div></div></div>
+  ${iosBanner()}
+  <div class="card col">
+    <h3>دخول دوري بالكود</h3>
+    <input id="codeIn" class="codein" maxlength="6" placeholder="------" autocomplete="off" autocapitalize="characters">
+    <button class="btn block" id="joinBtn">دخول</button>
+  </div>
+  <div class="card col">
+    <h3>إنشاء دوري جديد</h3>
+    <div><label>اسم الدوري</label><input id="lgName" maxlength="60" placeholder="مثال: دوري العيد الوطني"></div>
+    <div class="row">
+      <div><label>رقم سري للمنظم</label><input id="lgPin" inputmode="numeric" type="password" maxlength="8"></div>
+      <div><label>تأكيد الرقم</label><input id="lgPin2" inputmode="numeric" type="password" maxlength="8"></div>
+    </div>
+    <button class="btn block" id="createBtn">إنشاء الدوري</button>
+    <div class="muted">الرقم السري من 4 إلى 8 أرقام، وهو للمنظم فقط — اللاعبين يدخلون بالكود ويشاهدون بدون تعديل.</div>
+  </div>
+  ${recent.length ? `<div class="card"><h3 style="margin-bottom:10px">دورياتي الأخيرة</h3>
+    ${recent.map(r => `<div class="list-item" data-code="${esc(r.code)}"><div><b>${esc(r.name)}</b><div class="muted">${LS.get(pinKey(r.code)) ? '🔑 منظم' : 'مشاهد'}</div></div><span class="chip code">${esc(r.code)}</span></div>`).join('')}
+  </div>` : ''}
+  <div class="muted" style="text-align:center">الإصدار ${APP_VERSION}</div>`;
+}
+function bindHome(){
+  const ci = $('#codeIn');
+  ci.addEventListener('input', () => { ci.value = ci.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+  ci.addEventListener('keydown', e => { if(e.key === 'Enter') openLeague(ci.value); });
+  $('#joinBtn').onclick = () => openLeague(ci.value);
+  document.querySelectorAll('.list-item[data-code]').forEach(el => el.onclick = () => openLeague(el.dataset.code));
+  $('#createBtn').onclick = async () => {
+    const name = $('#lgName').value.trim(), pin = $('#lgPin').value.trim(), pin2 = $('#lgPin2').value.trim();
+    if(!name) return toast(ERR.name, true);
+    if(!/^\d{4,8}$/.test(pin)) return toast(ERR.pin_format, true);
+    if(pin !== pin2) return toast('الرقمين غير متطابقين', true);
+    const b = $('#createBtn'); b.disabled = true; b.textContent = 'جاري الإنشاء...';
+    const r = await rpc('create_league', { p_name:name, p_pin:pin });
+    b.disabled = false; b.textContent = 'إنشاء الدوري';
+    if(!r || !r.ok) return toast(ERR[r && r.error] || 'تعذر الإنشاء', true);
+    LS.set(pinKey(r.code), pin);
+    await openLeague(r.code);
+    S.tab = 'players'; render();
+    shareModal(true);
+  };
+}
+
+function iosBanner(){
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  if(!ios || standalone || LS.get('fl_ios_hide')) return '';
+  return `<div class="banner"><span style="font-size:22px">📲</span><div style="flex:1">للآيفون: اضغط زر <b>المشاركة</b> في Safari ثم <b>«إضافة إلى الشاشة الرئيسية»</b> ليصير تطبيق.</div><button class="x" onclick="LS.set('fl_ios_hide',1);this.parentElement.remove()">×</button></div>`;
+}
+
+function leagueHeader(){
+  return `<div class="lhead">
+    <button class="iconbtn" id="homeBtn" title="الرئيسية">⌂</button>
+    <div style="flex:1;min-width:0">
+      <div class="name">${esc(S.league.name)}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-start;margin-top:4px">
+        <span class="chip code" id="codeChip" style="flex:0 0 auto">${esc(S.league.code)} ⤴</span>
+        <span class="chip" style="flex:0 0 auto"><span id="liveDot" class="dot ${S.live}"></span><span id="liveTxt">${liveText()}</span></span>
+      </div>
+    </div>
+    <button class="iconbtn ${isOrg() ? 'on' : ''}" id="orgBtn" title="وضع المنظم">${isOrg() ? '🔓' : '🔒'}</button>
+  </div>`;
+}
+
+function tableView(){
+  const rows = standings();
+  if(!rows.length) return `<div class="card empty">ما في لاعبين بعد${isOrg() ? ' — أضفهم من تبويب «اللاعبين»' : ''}</div>`;
+  const played = activeMatches().length;
+  return `<div class="card" style="padding:10px 8px">
+    <table class="st"><thead><tr><th>#</th><th style="text-align:right">اللاعب</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>+/-</th><th>نقاط</th></tr></thead><tbody>
+    ${rows.map((r, i) => { const gd = r.GF - r.GA; return `<tr class="${i === 0 && r.P ? 'top1' : ''}">
+      <td><span class="pos ${r.P ? 'p' + (i + 1) : ''}">${i + 1}</span></td>
+      <td class="n"><div class="pl" data-pid="${r.p.id}">${avatar(r.p)}<b>${esc(r.p.name)}</b></div></td>
+      <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td>
+      <td class="${gd > 0 ? 'gdp' : gd < 0 ? 'gdn' : ''}" style="direction:ltr">${gd > 0 ? '+' : ''}${gd}</td>
+      <td class="pts">${r.Pts}</td></tr>`; }).join('')}
+    </tbody></table></div>
+  <div class="muted" style="text-align:center">${played} مباراة • الفوز ${S.league.settings.win ?? 3} • التعادل ${S.league.settings.draw ?? 1} • الخسارة ${S.league.settings.loss ?? 0}</div>`;
+}
+
+function pById(id){ return S.players.find(p => p.id === id) || { name:'؟' }; }
+function matchRow(m){
+  const h = pById(m.home_id), a = pById(m.away_id);
+  const hw = m.home_score > m.away_score, aw = m.away_score > m.home_score;
+  return `<div class="match" data-mid="${m.id}">
+    <div class="side">${avatar(h)}<span class="${hw ? 'win' : ''}">${esc(h.name)}</span></div>
+    <div class="score">${m.home_score} - ${m.away_score}</div>
+    <div class="side a">${avatar(a)}<span class="${aw ? 'win' : ''}">${esc(a.name)}</span></div>
+    <div class="meta"><span>${m.round ? `<span class="badge">الجولة ${m.round}</span> ` : ''}${m._pending ? '<span class="pending">⏳ بانتظار الرفع</span>' : fmtDate(m.played_at)}</span>
+    ${m.stats ? '<span class="badge">📊 إحصائيات</span>' : ''}</div>
+  </div>`;
+}
+function matchesView(){
+  const ms = activeMatches().slice().sort((x, y) => new Date(y.played_at) - new Date(x.played_at));
+  if(!ms.length) return `<div class="card empty">ما في مباريات بعد</div>`;
+  return `<div class="card" style="padding:4px 14px">${ms.map(matchRow).join('')}</div>`;
+}
+
+function playersView(){
+  const ps = activePlayers();
+  const st = Object.fromEntries(standings().map(r => [r.p.id, r]));
+  return `${isOrg() ? `<button class="btn block" id="addPlayer" style="margin-bottom:12px">+ إضافة لاعب</button>` : ''}
+  ${ps.length ? `<div class="pgrid">${ps.map(p => { const r = st[p.id] || {}; return `<div class="pcard" data-pid="${p.id}">${avatar(p, 'lg')}<div class="nm">${esc(p.name)}${p._pending ? ' <span class="pending">⏳</span>' : ''}</div><div class="muted">${r.P || 0} مباراة • ${r.Pts || 0} نقطة</div></div>`; }).join('')}</div>` : `<div class="card empty">ما في لاعبين بعد</div>`}`;
+}
+
+function settingsView(){
+  const s = S.league.settings || {};
+  return `
+  <div class="card col"><h3>الدوري</h3>
+    <div><label>اسم الدوري</label><input id="setName" value="${esc(S.league.name)}" maxlength="60"></div>
+    <div class="row"><div><label>نقاط الفوز</label><input id="setW" type="number" value="${s.win ?? 3}"></div><div><label>التعادل</label><input id="setD" type="number" value="${s.draw ?? 1}"></div><div><label>الخسارة</label><input id="setL" type="number" value="${s.loss ?? 0}"></div></div>
+    <button class="btn" id="saveSet">حفظ</button>
+  </div>
+  <div class="card col"><h3>تغيير الرقم السري</h3>
+    <div class="row"><input id="newPin" type="password" inputmode="numeric" maxlength="8" placeholder="الرقم الجديد"><button class="btn sec" id="chgPin" style="flex:0 0 auto">تغيير</button></div>
+  </div>
+  <div class="card col"><h3>نسخة احتياطية</h3>
+    <div class="row"><button class="btn sec" id="exportBtn">⬇️ تصدير JSON</button><button class="btn sec" id="importBtn">⬆️ استيراد</button></div>
+    <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+    <div class="muted">الاستيراد يضيف اللاعبين والمباريات من ملف إلى هذا الدوري.</div>
+  </div>
+  <button class="btn danger block" id="logoutOrg">الخروج من وضع المنظم على هذا الجهاز</button>`;
+}
+
+/* ===== Round generator ===== */
+function roundView(){
+  const ps = activePlayers();
+  if(ps.length < 2) return `<div class="card empty">أضف لاعبين أولاً</div>`;
+  const present = S.present || (S.round ? S.round.present : ps.map(p => p.id));
+  return `<div class="card col"><h3>الحاضرين</h3>
+    <div class="grid2">${ps.map(p => `<label class="chk"><input type="checkbox" class="pres" value="${p.id}" ${present.includes(p.id) ? 'checked' : ''}>${esc(p.name)}</label>`).join('')}</div>
+    <button class="btn" id="genRound">⚡ اقتراح جولة جديدة</button>
+    <div class="muted">يقدّم اللي لعبوا أقل، ويتجنب تكرار نفس المواجهة قدر الإمكان، ويعطي «راحة» عند العدد الفردي.</div>
+  </div>
+  ${S.round && S.round.pairs ? `<div class="card pairs"><h3 style="margin-bottom:10px">الجولة ${S.round.no}</h3>
+    ${S.round.pairs.map((pr, i) => `<div class="pair"><b>${esc(pById(pr[0]).name)}</b><span class="muted">ضد</span><b>${esc(pById(pr[1]).name)}</b><button class="btn sm" data-pair="${i}">${pr.done ? '✓' : 'النتيجة'}</button></div>`).join('')}
+    ${S.round.bye ? `<div class="muted">راحة: <b>${esc(pById(S.round.bye).name)}</b></div>` : ''}
+  </div>` : ''}`;
+}
+function generateRound(presentIds){
+  const counts = {}, met = {};
+  presentIds.forEach(id => counts[id] = 0);
+  activeMatches().forEach(m => {
+    if(m.home_id in counts) counts[m.home_id]++; if(m.away_id in counts) counts[m.away_id]++;
+    const k = [m.home_id, m.away_id].sort().join('|'); met[k] = (met[k] || 0) + 1;
+  });
+  let pool = presentIds.slice().sort(() => Math.random() - .5).sort((a, b) => counts[a] - counts[b]);
+  let bye = null;
+  if(pool.length % 2){ bye = pool.pop(); } // the one who played the most rests
+  const pairs = [];
+  while(pool.length){
+    const a = pool.shift();
+    let best = 0, bestScore = Infinity;
+    pool.forEach((b, i) => { const sc = (met[[a, b].sort().join('|')] || 0) * 100 + Math.abs(counts[a] - counts[b]); if(sc < bestScore){ bestScore = sc; best = i; } });
+    const b = pool.splice(best, 1)[0];
+    pairs.push(Math.random() < .5 ? [a, b] : [b, a]);
+  }
+  const maxR = Math.max(0, ...activeMatches().map(m => m.round || 0));
+  return { no: maxR + 1, pairs, bye, present: presentIds };
+}
+
+/* ===== Tabs & FAB ===== */
+function renderTabs(){
+  let t = $('#tabs'); if(!t){ t = document.createElement('nav'); t.id = 'tabs'; t.className = 'tabs'; document.body.appendChild(t); }
+  const items = [['table', '🏆', 'الترتيب'], ['matches', '⚽', 'المباريات'], ['players', '👥', 'اللاعبين']];
+  if(isOrg()){ items.push(['round', '🎲', 'الجولة'], ['settings', '⚙️', 'الإعدادات']); }
+  if(!isOrg() && (S.tab === 'round' || S.tab === 'settings')) S.tab = 'table';
+  t.innerHTML = items.map(([k, i, l]) => `<button class="tab ${S.tab === k ? 'act' : ''}" data-tab="${k}"><span class="i">${i}</span>${l}</button>`).join('');
+  t.querySelectorAll('.tab').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; render(); scrollTo(0, 0); });
+  bindLeague();
+}
+function renderFab(){
+  let f = $('#fab');
+  if(!isOrg() || activePlayers().length < 2 || S.tab === 'settings'){ f && f.remove(); return; }
+  if(!f){ f = document.createElement('button'); f.id = 'fab'; f.className = 'btn fab'; f.textContent = '+ مباراة'; document.body.appendChild(f); }
+  f.onclick = () => matchModal();
+}
+
+function bindLeague(){
+  $('#homeBtn') && ($('#homeBtn').onclick = () => { if(S.channel){ sb.removeChannel(S.channel); S.channel = null; } S.league = null; S.players = []; S.matches = []; S.round = null; S.present = null; history.replaceState(null, '', location.pathname); render(); });
+  $('#codeChip') && ($('#codeChip').onclick = () => shareModal());
+  $('#orgBtn') && ($('#orgBtn').onclick = () => isOrg() ? (S.tab = 'settings', render()) : pinModal());
+  document.querySelectorAll('[data-pid]').forEach(el => el.onclick = () => playerModal(el.dataset.pid));
+  document.querySelectorAll('.match[data-mid]').forEach(el => el.onclick = () => isOrg() ? matchModal(el.dataset.mid) : matchInfoModal(el.dataset.mid));
+  $('#addPlayer') && ($('#addPlayer').onclick = () => playerEditModal());
+  if(S.tab === 'round'){
+    $('#genRound').onclick = () => {
+      const ids = [...document.querySelectorAll('.pres:checked')].map(i => i.value);
+      if(ids.length < 2) return toast('اختر لاعبين اثنين على الأقل', true);
+      S.present = ids; S.round = generateRound(ids); render();
+    };
+    document.querySelectorAll('.pres').forEach(c => c.onchange = () => { S.present = [...document.querySelectorAll('.pres:checked')].map(i => i.value); });
+    document.querySelectorAll('[data-pair]').forEach(b => b.onclick = () => {
+      const pr = S.round.pairs[+b.dataset.pair];
+      matchModal(null, { home: pr[0], away: pr[1], round: S.round.no, onSaved: () => { pr.done = true; } });
+    });
+  }
+  if(S.tab === 'settings'){
+    $('#saveSet').onclick = async () => {
+      const settings = { win: +$('#setW').value || 0, draw: +$('#setD').value || 0, loss: +$('#setL').value || 0 };
+      const r = await rpc('update_league', { p_code: S.league.code, p_pin: LS.get(pinKey(S.league.code)), p_name: $('#setName').value, p_settings: settings });
+      if(!r || !r.ok) return toast(ERR[r && r.error] || 'تعذر الحفظ', true);
+      S.league.name = $('#setName').value.trim() || S.league.name; S.league.settings = settings; addRecent(S.league); saveCache(); toast('تم الحفظ ✓'); render();
+    };
+    $('#chgPin').onclick = async () => {
+      const np = $('#newPin').value.trim();
+      if(!/^\d{4,8}$/.test(np)) return toast(ERR.pin_format, true);
+      const r = await rpc('change_pin', { p_code: S.league.code, p_pin: LS.get(pinKey(S.league.code)), p_new_pin: np });
+      if(!r || !r.ok) return toast(ERR[r && r.error] || 'تعذر التغيير', true);
+      LS.set(pinKey(S.league.code), np); toast('تم تغيير الرقم السري ✓'); $('#newPin').value = '';
+    };
+    $('#exportBtn').onclick = exportJSON;
+    $('#importBtn').onclick = () => $('#importFile').click();
+    $('#importFile').onchange = e => importJSON(e.target.files[0]);
+    $('#logoutOrg').onclick = () => { LS.del(pinKey(S.league.code)); S.tab = 'table'; render(); toast('تم الخروج من وضع المنظم'); };
+  }
+}
+
+/* ================== MODALS ================== */
+function modal(html, onMount){
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="modal" id="mdl"><div class="sheet">${html}</div></div>`;
+  const m = $('#mdl'); m.addEventListener('click', e => { if(e.target === m) closeModal(); });
+  m.querySelectorAll('[data-close]').forEach(b => b.onclick = closeModal);
+  onMount && onMount(m);
+}
+function closeModal(){ $('#modalRoot').innerHTML = ''; }
+
+function shareModal(isNew){
+  const link = shareLink(S.league.code);
+  let qrSvg = '';
+  try{ const q = qrcode(0, 'M'); q.addData(link); q.make(); qrSvg = q.createSvgTag(5, 2); }catch(e){}
+  modal(`<h3>${isNew ? '🎉 تم إنشاء الدوري' : 'شارك الدوري'}<button class="x" data-close>×</button></h3>
+    <div style="text-align:center" class="col">
+      <div class="muted">كود الدخول</div>
+      <div class="bigcode">${S.league.code}</div>
+      ${qrSvg ? `<div><div class="qr">${qrSvg}</div></div><div class="muted">امسح الكود بكاميرا الجوال للدخول مباشرة</div>` : ''}
+      <div class="row"><button class="btn sec" id="copyLink">📋 نسخ الرابط</button><button class="btn" id="shareBtn">📤 مشاركة</button></div>
+      <a class="btn sec block" style="text-decoration:none" target="_blank" href="https://wa.me/?text=${encodeURIComponent('تابع نتائج «' + S.league.name + '» مباشرة:\n' + link + '\nالكود: ' + S.league.code)}">واتساب</a>
+      ${isNew ? `<div class="banner" style="text-align:right">🔑 احفظ الرقم السري — هو الطريقة الوحيدة لتعديل النتائج من جهاز ثاني.</div>` : ''}
+    </div>`, () => {
+    $('#copyLink').onclick = async () => { try{ await navigator.clipboard.writeText(link); toast('تم النسخ ✓'); }catch(e){ prompt('انسخ الرابط:', link); } };
+    $('#shareBtn').onclick = async () => { if(navigator.share){ try{ await navigator.share({ title: S.league.name, text: 'تابع نتائج الدوري مباشرة — الكود ' + S.league.code, url: link }); }catch(e){} } else { $('#copyLink').click(); } };
+  });
+}
+
+function pinModal(){
+  modal(`<h3>وضع المنظم<button class="x" data-close>×</button></h3>
+    <div class="col"><input id="pinIn" type="password" inputmode="numeric" maxlength="8" class="codein" placeholder="••••" autocomplete="off">
+    <button class="btn block" id="pinGo">دخول</button><div class="muted">المنظم فقط يقدر يضيف اللاعبين ويسجل النتائج.</div></div>`, () => {
+    const go = async () => {
+      const pin = $('#pinIn').value.trim(); if(!pin) return;
+      const r = await rpc('verify_pin', { p_code: S.league.code, p_pin: pin });
+      if(!r || !r.ok) return toast(ERR[r && r.error] || 'خطأ', true);
+      LS.set(pinKey(S.league.code), pin); closeModal(); toast('أهلاً بالمنظم 🔓'); render(); flush();
+    };
+    $('#pinGo').onclick = go; $('#pinIn').addEventListener('keydown', e => { if(e.key === 'Enter') go(); }); setTimeout(() => $('#pinIn').focus(), 100);
+  });
+}
+
+function resizeImage(file){
+  return new Promise((res, rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = 180, c = document.createElement('canvas'); c.width = c.height = s;
+      const ctx = c.getContext('2d'); const m = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, s, s);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .75));
+    };
+    img.onerror = rej; img.src = url;
+  });
+}
+
+function playerEditModal(pid){
+  const p = pid ? S.players.find(x => x.id === pid) : null;
+  let photo = p ? p.photo : null;
+  modal(`<h3>${p ? 'تعديل لاعب' : 'لاعب جديد'}<button class="x" data-close>×</button></h3>
+    <div class="col">
+      <div style="text-align:center"><span id="phPrev">${avatar({ name: p ? p.name : '?', photo }, 'lg')}</span></div>
+      <div><label>الاسم</label><input id="pName" maxlength="40" value="${esc(p ? p.name : '')}"></div>
+      <div class="row"><label class="btn sec" style="margin:0">📷 صورة (اختياري)<input type="file" id="pPhoto" accept="image/*" class="hidden"></label>
+      <button class="btn ghost" id="rmPhoto" style="flex:0 0 auto">بدون صورة</button></div>
+      <button class="btn block" id="pSave">حفظ</button>
+      ${p ? `<button class="btn danger block" id="pDel">حذف اللاعب</button>` : ''}
+    </div>`, () => {
+    $('#pPhoto').onchange = async e => { const f = e.target.files[0]; if(!f) return; try{ photo = await resizeImage(f); $('#phPrev').innerHTML = avatar({ name: $('#pName').value, photo }, 'lg'); }catch(err){ toast('تعذر قراءة الصورة', true); } };
+    $('#rmPhoto').onclick = () => { photo = null; $('#phPrev').innerHTML = avatar({ name: $('#pName').value }, 'lg'); };
+    $('#pSave').onclick = () => {
+      const name = $('#pName').value.trim(); if(!name) return toast(ERR.name, true);
+      if(activePlayers().some(x => x.name === name && x.id !== pid)) return toast('الاسم موجود مسبقاً', true);
+      const id = pid || uuid();
+      const args = { p_id: id, p_name: name, p_photo: photo, p_deleted: false };
+      queue('upsert_player', args, () => upsertLocal('players', { id, league_id: S.league.id, name, photo, deleted: false, _pending: true, created_at: p ? p.created_at : new Date().toISOString() }));
+      closeModal(); if(!pid){ playerEditModal(); toast('تمت الإضافة ✓ — أضف التالي'); }
+    };
+    $('#pDel') && ($('#pDel').onclick = () => {
+      if(!confirm('حذف ' + p.name + '؟ مبارياته بتنشال من الترتيب.')) return;
+      queue('upsert_player', { p_id: p.id, p_name: p.name, p_photo: p.photo, p_deleted: true }, () => upsertLocal('players', { id: p.id, deleted: true, _pending: true }));
+      closeModal();
+    });
+    setTimeout(() => !pid && $('#pName').focus(), 100);
+  });
+}
+
+function playerModal(pid){
+  const p = S.players.find(x => x.id === pid); if(!p) return;
+  const r = standings().find(x => x.p.id === pid) || { P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0, form:[] };
+  const rank = standings().findIndex(x => x.p.id === pid) + 1;
+  const ms = activeMatches().filter(m => m.home_id === pid || m.away_id === pid).sort((x, y) => new Date(y.played_at) - new Date(x.played_at));
+  modal(`<h3><span class="pl">${avatar(p, 'lg')}<span>${esc(p.name)}<div class="muted">المركز ${rank}</div></span></span><button class="x" data-close>×</button></h3>
+    <div class="grid2" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+      <div class="kpi"><b>${r.Pts}</b>نقاط</div><div class="kpi"><b>${r.P}</b>لعب</div><div class="kpi"><b>${r.GF}</b>سجّل</div><div class="kpi"><b>${r.GA}</b>استقبل</div>
+    </div>
+    <div class="muted" style="margin-bottom:6px">فوز ${r.W} • تعادل ${r.D} • خسارة ${r.L}</div>
+    <div>${ms.map(matchRow).join('') || '<div class="empty">ما لعب بعد</div>'}</div>
+    ${isOrg() ? `<button class="btn sec block" id="editP" style="margin-top:12px">✏️ تعديل اللاعب</button>` : ''}`, () => {
+    $('#editP') && ($('#editP').onclick = () => playerEditModal(pid));
+  });
+}
+
+const STAT_FIELDS = [['shots', 'تسديدات'], ['on_target', 'على المرمى'], ['possession', 'استحواذ %'], ['yellow', 'صفراء'], ['red', 'حمراء']];
+function matchInfoModal(mid){
+  const m = S.matches.find(x => x.id === mid); if(!m) return;
+  const h = pById(m.home_id), a = pById(m.away_id), st = m.stats || {};
+  modal(`<h3>تفاصيل المباراة<button class="x" data-close>×</button></h3>
+    ${matchRow(m)}
+    ${m.stats ? `<div class="statgrid" style="margin-top:10px"><b style="text-align:center">${esc(h.name)}</b><span></span><b style="text-align:center">${esc(a.name)}</b>
+      ${STAT_FIELDS.filter(([k]) => st[k]).map(([k, l]) => `<div style="text-align:center">${st[k][0] ?? '-'}</div><div class="lb">${l}</div><div style="text-align:center">${st[k][1] ?? '-'}</div>`).join('')}</div>` : '<div class="muted">لا توجد إحصائيات</div>'}`);
+}
+
+function matchModal(mid, opts = {}){
+  const m = mid ? S.matches.find(x => x.id === mid) : null;
+  const ps = activePlayers();
+  let hs = m ? m.home_score : 0, as = m ? m.away_score : 0;
+  const home = m ? m.home_id : opts.home || '', away = m ? m.away_id : opts.away || '';
+  const st = (m && m.stats) || {};
+  const opt = sel => `<option value="">— اختر —</option>` + ps.map(p => `<option value="${p.id}" ${p.id === sel ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  modal(`<h3>${m ? 'تعديل مباراة' : 'تسجيل مباراة'}<button class="x" data-close>×</button></h3>
+    <div class="vs">
+      <div><select id="mH">${opt(home)}</select><div class="step"><button data-s="h-">−</button><span class="v" id="hs">${hs}</span><button data-s="h+">+</button></div></div>
+      <div class="muted" style="padding-bottom:18px">ضد</div>
+      <div><select id="mA">${opt(away)}</select><div class="step"><button data-s="a-">−</button><span class="v" id="as">${as}</span><button data-s="a+">+</button></div></div>
+    </div>
+    <div style="margin-top:12px"><label>رقم الجولة (اختياري)</label><input id="mR" type="number" min="1" value="${m ? (m.round || '') : (opts.round || '')}"></div>
+    <details ${m && m.stats ? 'open' : ''}><summary>📊 إحصائيات (اختياري)</summary>
+      <div class="statgrid">${STAT_FIELDS.map(([k, l]) => `<input type="number" min="0" data-st="${k}" data-i="0" value="${st[k] ? st[k][0] ?? '' : ''}"><div class="lb">${l}</div><input type="number" min="0" data-st="${k}" data-i="1" value="${st[k] ? st[k][1] ?? '' : ''}">`).join('')}</div>
+    </details>
+    <button class="btn block" id="mSave" style="margin-top:12px">حفظ النتيجة</button>
+    ${m ? `<button class="btn danger block" id="mDel" style="margin-top:8px">حذف المباراة</button>` : ''}`, () => {
+    document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
+      const k = b.dataset.s; if(k === 'h+') hs++; if(k === 'h-') hs = Math.max(0, hs - 1); if(k === 'a+') as++; if(k === 'a-') as = Math.max(0, as - 1);
+      hs = Math.min(hs, 99); as = Math.min(as, 99); $('#hs').textContent = hs; $('#as').textContent = as;
+    });
+    $('#mSave').onclick = () => {
+      const h = $('#mH').value, a = $('#mA').value;
+      if(!h || !a) return toast('اختر اللاعبين', true);
+      if(h === a) return toast(ERR.same_player, true);
+      const stats = {}; let any = false;
+      document.querySelectorAll('[data-st]').forEach(i => { if(i.value !== ''){ any = true; (stats[i.dataset.st] = stats[i.dataset.st] || [null, null])[+i.dataset.i] = +i.value; } });
+      const id = m ? m.id : uuid(); const round = +$('#mR').value || null;
+      const args = { p_id: id, p_home: h, p_away: a, p_home_score: hs, p_away_score: as, p_round: round, p_stats: any ? stats : null, p_deleted: false };
+      queue('upsert_match', args, () => upsertLocal('matches', { id, league_id: S.league.id, home_id: h, away_id: a, home_score: hs, away_score: as, round, stats: any ? stats : null, deleted: false, _pending: true, played_at: m ? m.played_at : new Date().toISOString() }));
+      opts.onSaved && opts.onSaved(); closeModal(); toast('تم تسجيل النتيجة ✓'); render();
+    };
+    $('#mDel') && ($('#mDel').onclick = () => {
+      if(!confirm('حذف هذه المباراة؟')) return;
+      queue('upsert_match', { p_id: m.id, p_home: m.home_id, p_away: m.away_id, p_home_score: m.home_score, p_away_score: m.away_score, p_round: m.round, p_stats: m.stats, p_deleted: true }, () => upsertLocal('matches', { id: m.id, deleted: true, _pending: true }));
+      closeModal();
+    });
+  });
+}
+
+/* ================== BACKUP ================== */
+function exportJSON(){
+  const data = { app: 'family-league', version: 1, exported_at: new Date().toISOString(),
+    league: { name: S.league.name, code: S.league.code, settings: S.league.settings },
+    players: activePlayers().map(({ _pending, ...p }) => p), matches: activeMatches().map(({ _pending, ...m }) => m) };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `league-${S.league.code}-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function importJSON(file){
+  if(!file) return;
+  try{
+    const d = JSON.parse(await file.text());
+    if(!Array.isArray(d.players) || !Array.isArray(d.matches)) throw 0;
+    if(!confirm(`استيراد ${d.players.length} لاعب و ${d.matches.length} مباراة إلى هذا الدوري؟`)) return;
+    const map = {};
+    d.players.forEach(p => {
+      const existing = activePlayers().find(x => x.name === p.name);
+      const id = existing ? existing.id : uuid(); map[p.id] = id;
+      if(!existing) queue('upsert_player', { p_id: id, p_name: p.name, p_photo: p.photo || null, p_deleted: false }, () => upsertLocal('players', { id, league_id: S.league.id, name: p.name, photo: p.photo || null, deleted: false, _pending: true, created_at: new Date().toISOString() }));
+    });
+    d.matches.forEach(m => {
+      if(!map[m.home_id] || !map[m.away_id]) return;
+      const id = uuid();
+      queue('upsert_match', { p_id: id, p_home: map[m.home_id], p_away: map[m.away_id], p_home_score: m.home_score, p_away_score: m.away_score, p_round: m.round || null, p_stats: m.stats || null, p_deleted: false },
+        () => upsertLocal('matches', { id, league_id: S.league.id, home_id: map[m.home_id], away_id: map[m.away_id], home_score: m.home_score, away_score: m.away_score, round: m.round || null, stats: m.stats || null, deleted: false, _pending: true, played_at: m.played_at || new Date().toISOString() }));
+    });
+    toast('تم الاستيراد ✓');
+  }catch(e){ toast('ملف غير صالح', true); }
+}
+
+/* ================== BOOT ================== */
+if('serviceWorker' in navigator && location.protocol === 'https:'){ navigator.serviceWorker.register('sw.js').catch(() => {}); }
+(function boot(){
+  const c = new URLSearchParams(location.search).get('c');
+  render();
+  if(!sb) toast('تعذر تحميل مكتبة الاتصال — تأكد من الإنترنت', true);
+  if(c) openLeague(c);
+})();
+</script>
+</body>
+</html>
